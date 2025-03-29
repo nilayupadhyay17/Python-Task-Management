@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  auth_db:
+    image: postgres:latest
+    environment:
+      - POSTGRES_USER=${AUTH_DB_USER}
+      - POSTGRES_PASSWORD=${AUTH_DB_PASSWORD}
+      - POSTGRES_DB=${AUTH_DB_NAME}
+    ports:
+      - "5432:5432"
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d auth_db"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 5s
+    restart: always 
+
+  auth_service:
+    build: ./auth_service
+    ports:
+      - "5001:5001"
+    depends_on:
+      - auth_db
+    environment:
+      - DB_USER=${AUTH_DB_USER}
+      - DB_PASSWORD=${AUTH_DB_PASSWORD}
+      - DB_HOST=${AUTH_DB_HOST}
+      - DB_PORT=${AUTH_DB_PORT}
+      - DB_NAME=${AUTH_DB_NAME}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+    networks:
+      - app_network
+    restart: always
+
+  # task_service:
+  #   build: ./task_service
+  #   ports:
+  #     - "5002:5002"
+  #   depends_on:
+  #     - task_db
+  #   env_file:
+  #     - ./.env  # Reference the .env file here
+  #   environment:
+  #     - DB_USER=${TASK_DB_USER}
+  #     - DB_PASSWORD=${TASK_DB_PASSWORD}
+  #     - DB_HOST=${TASK_DB_HOST}
+  #     - DB_PORT=${TASK_DB_PORT}
+  #     - DB_NAME=${TASK_DB_NAME}
+  #   networks:
+  #     - app_network
+  #   restart: always
+
+  # task_db:
+  #   image: postgres:13
+  #   restart: always
+  #   env_file:
+  #     - ./.env  # Reference the .env file here as well
+  #   ports:
+  #     - "5434:5432"
+  #   volumes:
+  #     - task_db_data:/var/lib/postgresql/data
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U postgres"]
+  #     interval: 10s
+  #     retries: 5
+  #   networks:
+  #     - app_network
+
+networks:
+  app_network:
+    driver: bridge
+
+volumes:
+  auth_db_data:
+  task_db_data:

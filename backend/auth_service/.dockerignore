@@ -1,0 +1,6 @@
+# .dockerignore
+*.log
+*.bak
+*.swp
+.DS_Store
+Thumbs.db
